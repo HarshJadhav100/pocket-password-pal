@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/4aa4d796-5338-442c-8338-b7fcd9f3ecb6
+**URL**: https://preview--pocket-password-pal.lovable.app/
 
 ## How can I edit this code?
 
