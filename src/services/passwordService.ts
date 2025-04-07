@@ -14,7 +14,7 @@ const mapToPasswordEntry = (row: PasswordEntryRow): PasswordEntry => ({
   password: row.password,
   url: row.url || "",
   notes: row.notes || "",
-  favorite: Boolean(row.favorite) || false,
+  favorite: row.favorite ? true : false,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   category: row.category || "",
