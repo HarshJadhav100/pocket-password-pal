@@ -2,6 +2,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { PasswordData } from "@/components/passwords/PasswordForm";
 import { PasswordEntry } from "@/utils/demoData";
+import { Tables } from "@/integrations/supabase/types";
+
+type PasswordEntryRow = Tables<"password_entries">;
 
 // Fetch all passwords for the current user
 export const fetchPasswords = async (): Promise<PasswordEntry[]> => {
@@ -32,7 +35,7 @@ export const addPassword = async (passwordData: PasswordData): Promise<PasswordE
         url,
         notes,
         last_used: new Date().toISOString(),
-      },
+      } as Tables<"password_entries">["Insert"]
     ])
     .select()
     .single();
@@ -58,7 +61,7 @@ export const updatePassword = async (id: string, passwordData: PasswordData): Pr
       url,
       notes,
       updated_at: new Date().toISOString(),
-    })
+    } as Partial<Tables<"password_entries">["Update"]>)
     .eq("id", id)
     .select()
     .single();
@@ -89,8 +92,8 @@ export const markPasswordAsUsed = async (id: string): Promise<void> => {
   const { error } = await supabase
     .from("password_entries")
     .update({
-      last_used: new Date().toISOString(),
-    })
+      last_used: new Date().toISOString()
+    } as Partial<Tables<"password_entries">["Update"]>)
     .eq("id", id);
   
   if (error) {
