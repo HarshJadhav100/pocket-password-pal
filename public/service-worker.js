@@ -6,6 +6,8 @@ const urlsToCache = [
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
+  '/src/index.css',
+  '/src/main.tsx'
 ];
 
 // Install event - cache assets

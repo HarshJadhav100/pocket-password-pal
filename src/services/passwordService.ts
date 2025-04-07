@@ -6,6 +6,21 @@ import { Tables } from "@/integrations/supabase/types";
 
 type PasswordEntryRow = Tables<"password_entries">;
 
+// Helper function to convert DB row to PasswordEntry
+const mapToPasswordEntry = (row: PasswordEntryRow): PasswordEntry => ({
+  id: row.id,
+  title: row.title,
+  username: row.username,
+  password: row.password,
+  url: row.url || "",
+  notes: row.notes || "",
+  favorite: row.favorite || false,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  category: row.category || "",
+  lastUsed: row.last_used || null,
+});
+
 // Fetch all passwords for the current user
 export const fetchPasswords = async (): Promise<PasswordEntry[]> => {
   const { data, error } = await supabase
@@ -18,7 +33,7 @@ export const fetchPasswords = async (): Promise<PasswordEntry[]> => {
     throw error;
   }
   
-  return data || [];
+  return (data || []).map(mapToPasswordEntry);
 };
 
 // Add a new password
@@ -45,7 +60,7 @@ export const addPassword = async (passwordData: PasswordData): Promise<PasswordE
     throw error;
   }
   
-  return data;
+  return mapToPasswordEntry(data);
 };
 
 // Update an existing password
@@ -71,7 +86,7 @@ export const updatePassword = async (id: string, passwordData: PasswordData): Pr
     throw error;
   }
   
-  return data;
+  return mapToPasswordEntry(data);
 };
 
 // Delete a password
