@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import AuthScreen from '@/components/auth/AuthScreen';
-import PasswordVault from '@/pages/PasswordVault';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, isLoading } = useAuth();
   
   // Add PWA installation prompt
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
@@ -48,63 +49,47 @@ const Index = () => {
       console.log('User dismissed the install prompt');
     }
   };
-
-  // For demonstration purposes, allow auto-login
-  const handleDemoLogin = () => {
-    setIsAuthenticated(true);
-  };
   
-  // In a real app, you would check Supabase session here
-  useEffect(() => {
-    // This would be replaced by Supabase auth check
-    const checkAuth = async () => {
-      const fakeAuthCheck = false; // This would be a real auth check with Supabase
-      setIsAuthenticated(fakeAuthCheck);
-    };
-    
-    checkAuth();
-  }, []);
-
-  if (isAuthenticated) {
-    return <PasswordVault onLogout={() => setIsAuthenticated(false)} />;
+  // If user is authenticated, redirect to vault
+  if (user) {
+    return <Navigate to="/vault" replace />;
+  }
+  
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-16 w-16 animate-spin rounded-full border-b-2 border-t-2 border-brand-600"></div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen relative">
       <AuthScreen />
       
-      {/* Demo login button for development */}
-      <div className="fixed bottom-4 right-4 flex flex-col gap-2">
-        {showInstallButton && (
-          <button 
-            onClick={handleAppInstall}
-            className="bg-brand-600 text-white py-2 px-4 rounded-md flex items-center shadow-lg"
-          >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-5 w-5 mr-2" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M12 4v16m8-8H4" 
-              />
-            </svg>
-            Add to Home Screen
-          </button>
-        )}
-        
+      {showInstallButton && (
         <button 
-          onClick={handleDemoLogin}
-          className="bg-brand-700 text-white py-2 px-4 rounded-md shadow-lg"
+          onClick={handleAppInstall}
+          className="fixed bottom-4 right-4 bg-brand-600 text-white py-2 px-4 rounded-md flex items-center shadow-lg"
         >
-          Demo Login (No Supabase)
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="h-5 w-5 mr-2" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M12 4v16m8-8H4" 
+            />
+          </svg>
+          Add to Home Screen
         </button>
-      </div>
+      )}
     </div>
   );
 };

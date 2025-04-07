@@ -38,6 +38,11 @@ self.addEventListener('activate', event => {
 
 // Fetch event - respond with cache first, then network
 self.addEventListener('fetch', event => {
+  // Skip Supabase API requests from caching - we always want fresh data
+  if (event.request.url.includes('supabase.co')) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
@@ -67,5 +72,62 @@ self.addEventListener('fetch', event => {
           }
         );
       })
+  );
+});
+
+// Background sync event - for offline data syncing
+self.addEventListener('sync', event => {
+  if (event.tag === 'sync-passwords') {
+    event.waitUntil(syncPasswords());
+  }
+});
+
+// Function to sync passwords from IndexedDB to Supabase when online
+async function syncPasswords() {
+  // This would be implemented with IndexedDB
+  console.log('Syncing passwords from offline storage');
+  
+  // In a real implementation, this would:
+  // 1. Open IndexedDB
+  // 2. Get pending password changes
+  // 3. Send them to Supabase
+  // 4. Clear the pending changes
+}
+
+// Push notification event
+self.addEventListener('push', event => {
+  const data = event.data.json();
+  
+  const options = {
+    body: data.body || 'New notification from Pocket Password Pal',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-72x72.png',
+    data: {
+      url: data.url || '/'
+    }
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Pocket Password Pal', options)
+  );
+});
+
+// Notification click event
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  
+  // This looks to see if the current is already open and focuses if it is
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url === event.notification.data.url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      
+      if (clients.openWindow) {
+        return clients.openWindow(event.notification.data.url || '/');
+      }
+    })
   );
 });

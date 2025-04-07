@@ -16,15 +16,18 @@ import { useToast } from "@/components/ui/use-toast";
 import { LogOut, PlusCircle, Search, Shield } from "lucide-react";
 import PasswordCard from "@/components/passwords/PasswordCard";
 import PasswordForm, { PasswordData } from "@/components/passwords/PasswordForm";
-import { generateDemoPasswords, PasswordEntry } from "@/utils/demoData";
+import { PasswordEntry } from "@/utils/demoData";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { 
+  fetchPasswords, 
+  addPassword, 
+  updatePassword, 
+  deletePassword 
+} from "@/services/passwordService";
 
-interface PasswordVaultProps {
-  onLogout: () => void;
-}
-
-const PasswordVault = ({ onLogout }: PasswordVaultProps) => {
-  const [passwords, setPasswords] = useState<PasswordEntry[]>([]);
+const PasswordVault = () => {
   const [filteredPasswords, setFilteredPasswords] = useState<PasswordEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -33,13 +36,71 @@ const PasswordVault = ({ onLogout }: PasswordVaultProps) => {
   const [currentPassword, setCurrentPassword] = useState<PasswordEntry | undefined>(undefined);
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
+  const { signOut } = useAuth();
+  
+  const queryClient = useQueryClient();
 
-  // Load demo passwords
-  useEffect(() => {
-    const demoPasswords = generateDemoPasswords();
-    setPasswords(demoPasswords);
-    setFilteredPasswords(demoPasswords);
-  }, []);
+  // Fetch passwords using React Query
+  const { data: passwords = [], isLoading, isError } = useQuery({
+    queryKey: ['passwords'],
+    queryFn: fetchPasswords,
+  });
+
+  // Mutations for CRUD operations
+  const addMutation = useMutation({
+    mutationFn: addPassword,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['passwords'] });
+      toast({
+        title: "Password added",
+        description: "Your new password has been saved securely.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error adding password",
+        description: (error as Error).message || "An error occurred while adding the password.",
+      });
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: PasswordData }) => 
+      updatePassword(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['passwords'] });
+      toast({
+        title: "Password updated",
+        description: "Your password entry has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error updating password",
+        description: (error as Error).message || "An error occurred while updating the password.",
+      });
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deletePassword,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['passwords'] });
+      toast({
+        title: "Password deleted",
+        description: "The password entry has been removed.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error deleting password",
+        description: (error as Error).message || "An error occurred while deleting the password.",
+      });
+    }
+  });
 
   // Filter passwords when search query changes
   useEffect(() => {
@@ -57,6 +118,11 @@ const PasswordVault = ({ onLogout }: PasswordVaultProps) => {
     );
     setFilteredPasswords(filtered);
   }, [searchQuery, passwords]);
+
+  // Set filtered passwords initially
+  useEffect(() => {
+    setFilteredPasswords(passwords);
+  }, [passwords]);
 
   const handleAddPassword = () => {
     setCurrentPassword(undefined);
@@ -80,63 +146,24 @@ const PasswordVault = ({ onLogout }: PasswordVaultProps) => {
 
   const confirmDelete = () => {
     if (selectedPasswordId) {
-      setPasswords((prev) => prev.filter((pw) => pw.id !== selectedPasswordId));
-      toast({
-        title: "Password deleted",
-        description: "The password entry has been removed.",
-      });
+      deleteMutation.mutate(selectedPasswordId);
       setIsDeleteDialogOpen(false);
       setSelectedPasswordId(null);
     }
   };
 
   const handleSavePassword = (data: PasswordData) => {
-    const now = new Date().toISOString();
-    
     if (isEditing && currentPassword) {
-      // Update existing password
-      setPasswords((prev) =>
-        prev.map((pw) =>
-          pw.id === currentPassword.id
-            ? {
-                ...pw,
-                title: data.title,
-                username: data.username,
-                password: data.password,
-                url: data.url,
-                notes: data.notes,
-                updatedAt: now,
-              }
-            : pw
-        )
-      );
-      
-      toast({
-        title: "Password updated",
-        description: "Your password entry has been updated successfully.",
-      });
+      updateMutation.mutate({ id: currentPassword.id, data });
     } else {
-      // Add new password
-      const newPassword: PasswordEntry = {
-        id: `pw_${Date.now()}`,
-        title: data.title,
-        username: data.username,
-        password: data.password,
-        url: data.url,
-        notes: data.notes,
-        createdAt: now,
-        updatedAt: now,
-      };
-      
-      setPasswords((prev) => [newPassword, ...prev]);
-      
-      toast({
-        title: "Password added",
-        description: "Your new password has been saved securely.",
-      });
+      addMutation.mutate(data);
     }
     
     setIsFormOpen(false);
+  };
+
+  const handleLogout = () => {
+    signOut();
   };
 
   return (
@@ -169,7 +196,7 @@ const PasswordVault = ({ onLogout }: PasswordVaultProps) => {
               <PlusCircle className="h-4 w-4 mr-2" />
               Add New
             </Button>
-            <Button variant="ghost" size="icon" onClick={onLogout}>
+            <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut className="h-5 w-5" />
               <span className="sr-only">Log out</span>
             </Button>
@@ -178,7 +205,15 @@ const PasswordVault = ({ onLogout }: PasswordVaultProps) => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {filteredPasswords.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-brand-600"></div>
+          </div>
+        ) : isError ? (
+          <div className="text-center p-8">
+            <p className="text-red-500 font-semibold">Error loading passwords. Please try again later.</p>
+          </div>
+        ) : filteredPasswords.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredPasswords.map((password, index) => (
               <motion.div

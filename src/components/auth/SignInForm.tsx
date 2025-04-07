@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Lock, Mail } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SignInFormProps {
   onSwitch: () => void;
@@ -14,27 +15,17 @@ interface SignInFormProps {
 const SignInForm = ({ onSwitch }: SignInFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { signIn, isLoading } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
+    
     try {
-      // When Supabase is connected, authentication logic will go here
-      toast({
-        title: "Please connect to Supabase",
-        description: "Authentication requires connecting to Supabase",
-      });
+      await signIn(email, password);
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to sign in. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
+      // Error handling is done in the useAuth hook
+      console.error("Sign in error:", error);
     }
   };
 
