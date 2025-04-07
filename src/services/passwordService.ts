@@ -14,7 +14,7 @@ const mapToPasswordEntry = (row: PasswordEntryRow): PasswordEntry => ({
   password: row.password,
   url: row.url || "",
   notes: row.notes || "",
-  favorite: row.favorite || false,
+  favorite: Boolean(row.favorite) || false,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   category: row.category || "",
@@ -40,6 +40,14 @@ export const fetchPasswords = async (): Promise<PasswordEntry[]> => {
 export const addPassword = async (passwordData: PasswordData): Promise<PasswordEntry> => {
   const { title, username, password, url, notes } = passwordData;
   
+  // Get the current user
+  const { data: sessionData } = await supabase.auth.getSession();
+  const user_id = sessionData.session?.user.id;
+  
+  if (!user_id) {
+    throw new Error("You must be logged in to add passwords");
+  }
+  
   const { data, error } = await supabase
     .from("password_entries")
     .insert([
@@ -49,8 +57,9 @@ export const addPassword = async (passwordData: PasswordData): Promise<PasswordE
         password,
         url,
         notes,
+        user_id,
         last_used: new Date().toISOString(),
-      } as Tables<"password_entries">["Insert"]
+      }
     ])
     .select()
     .single();
@@ -76,7 +85,7 @@ export const updatePassword = async (id: string, passwordData: PasswordData): Pr
       url,
       notes,
       updated_at: new Date().toISOString(),
-    } as Partial<Tables<"password_entries">["Update"]>)
+    })
     .eq("id", id)
     .select()
     .single();
@@ -108,7 +117,7 @@ export const markPasswordAsUsed = async (id: string): Promise<void> => {
     .from("password_entries")
     .update({
       last_used: new Date().toISOString()
-    } as Partial<Tables<"password_entries">["Update"]>)
+    })
     .eq("id", id);
   
   if (error) {
