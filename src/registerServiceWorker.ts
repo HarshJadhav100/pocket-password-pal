@@ -22,7 +22,7 @@ export function register() {
                   // At this point, the updated precached content has been fetched,
                   console.log('New content is available and will be used when all tabs for this page are closed.');
                   
-                  // Show update notification if needed
+                  // Show update notification
                   if (window.confirm('New version available! Reload to update?')) {
                     window.location.reload();
                   }

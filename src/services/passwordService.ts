@@ -1,127 +1,62 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { PasswordData } from "@/components/passwords/PasswordForm";
-import { PasswordEntry } from "@/utils/demoData";
-import { Tables } from "@/integrations/supabase/types";
+import { supabase } from '@/integrations/supabase/client';
+import { PasswordEntry } from '@/integrations/supabase/types';
 
-type PasswordEntryRow = Tables<"password_entries">;
-
-// Helper function to convert DB row to PasswordEntry
-const mapToPasswordEntry = (row: PasswordEntryRow): PasswordEntry => ({
-  id: row.id,
-  title: row.title,
-  username: row.username,
-  password: row.password,
-  url: row.url || "",
-  notes: row.notes || "",
-  favorite: row.favorite || false,
-  createdAt: row.created_at,
-  updatedAt: row.updated_at,
-  category: row.category || "",
-  lastUsed: row.last_used || null,
-});
-
-// Fetch all passwords for the current user
+// Function to fetch all passwords for the current user
 export const fetchPasswords = async (): Promise<PasswordEntry[]> => {
-  const { data, error } = await supabase
-    .from("password_entries")
-    .select("*")
-    .order("created_at", { ascending: false });
-    
-  if (error) {
-    console.error("Error fetching passwords:", error);
-    throw error;
-  }
+  const { data: session } = await supabase.auth.getSession();
+  if (!session?.session?.user) throw new Error('No authenticated user found');
   
-  return (data || []).map(mapToPasswordEntry);
+  const { data, error } = await supabase
+    .from('passwords')
+    .select('*')
+    .eq('user_id', session.session.user.id);
+
+  if (error) throw error;
+  return data || [];
 };
 
-// Add a new password
-export const addPassword = async (passwordData: PasswordData): Promise<PasswordEntry> => {
-  const { title, username, password, url, notes } = passwordData;
-  
-  // Get the current user
-  const { data: sessionData } = await supabase.auth.getSession();
-  const user_id = sessionData.session?.user.id;
-  
-  if (!user_id) {
-    throw new Error("You must be logged in to add passwords");
-  }
+// Function to map data to a PasswordEntry object without 'favorite' property
+export const mapToPasswordEntry = (data: any): Omit<PasswordEntry, 'id'> => {
+  // Remove any properties not in the PasswordEntry type
+  const { id, favorite, ...rest } = data;
+  return rest;
+};
+
+// Function to create a new password entry
+export const createPassword = async (passwordData: Omit<PasswordEntry, 'id'>): Promise<PasswordEntry> => {
+  const { data: session } = await supabase.auth.getSession();
+  if (!session?.session?.user) throw new Error('No authenticated user found');
   
   const { data, error } = await supabase
-    .from("password_entries")
-    .insert([
-      {
-        title,
-        username,
-        password,
-        url,
-        notes,
-        user_id,
-        last_used: new Date().toISOString(),
-      }
-    ])
+    .from('passwords')
+    .insert({ ...passwordData, user_id: session.session.user.id })
     .select()
     .single();
-  
-  if (error) {
-    console.error("Error adding password:", error);
-    throw error;
-  }
-  
-  return mapToPasswordEntry(data);
+
+  if (error) throw error;
+  return data;
 };
 
-// Update an existing password
-export const updatePassword = async (id: string, passwordData: PasswordData): Promise<PasswordEntry> => {
-  const { title, username, password, url, notes } = passwordData;
-  
+// Function to update an existing password
+export const updatePassword = async (id: string, passwordData: Partial<Omit<PasswordEntry, 'id'>>): Promise<PasswordEntry> => {
   const { data, error } = await supabase
-    .from("password_entries")
-    .update({
-      title,
-      username,
-      password,
-      url,
-      notes,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
+    .from('passwords')
+    .update(passwordData)
+    .eq('id', id)
     .select()
     .single();
-  
-  if (error) {
-    console.error("Error updating password:", error);
-    throw error;
-  }
-  
-  return mapToPasswordEntry(data);
+
+  if (error) throw error;
+  return data;
 };
 
-// Delete a password
+// Function to delete a password
 export const deletePassword = async (id: string): Promise<void> => {
   const { error } = await supabase
-    .from("password_entries")
+    .from('passwords')
     .delete()
-    .eq("id", id);
-  
-  if (error) {
-    console.error("Error deleting password:", error);
-    throw error;
-  }
-};
+    .eq('id', id);
 
-// Mark a password as used (updates last_used timestamp)
-export const markPasswordAsUsed = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from("password_entries")
-    .update({
-      last_used: new Date().toISOString()
-    })
-    .eq("id", id);
-  
-  if (error) {
-    console.error("Error marking password as used:", error);
-    throw error;
-  }
+  if (error) throw error;
 };
