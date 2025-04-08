@@ -98,7 +98,7 @@ async function syncPasswords() {
 
 // Push notification event
 self.addEventListener('push', event => {
-  const data = event.data.json();
+  const data = event.data ? event.data.json() : {};
   
   const options = {
     body: data.body || 'New notification from Pocket Password Pal',

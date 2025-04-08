@@ -1,6 +1,16 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { PasswordEntry } from '@/integrations/supabase/types';
+
+// Define PasswordEntry type if not imported from supabase types
+export interface PasswordEntry {
+  id: string;
+  user_id: string;
+  title: string;
+  username: string;
+  password: string;
+  url?: string;
+  favorite?: boolean;
+}
 
 // Function to fetch all passwords for the current user
 export const fetchPasswords = async (): Promise<PasswordEntry[]> => {
@@ -60,3 +70,6 @@ export const deletePassword = async (id: string): Promise<void> => {
 
   if (error) throw error;
 };
+
+// Alias functions to match the interface expected by PasswordVault.tsx
+export const addPassword = createPassword;
