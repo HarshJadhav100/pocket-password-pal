@@ -5,6 +5,15 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
+// Define interfaces for ServiceWorker sync functionality, which TypeScript doesn't fully recognize
+interface SyncManager {
+  register(tag: string): Promise<void>;
+}
+
+interface ExtendedServiceWorkerRegistration extends ServiceWorkerRegistration {
+  sync?: SyncManager;
+}
+
 const Index = () => {
   const { user, isLoading } = useAuth();
   
@@ -56,18 +65,25 @@ const Index = () => {
   const testServiceWorkerFeatures = () => {
     // Test background sync
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
-      navigator.serviceWorker.ready.then(registration => {
-        registration.sync.register('sync-passwords')
-          .then(() => {
-            console.log('Sync registration successful');
-            toast('Background sync test triggered');
-          })
-          .catch(error => {
-            console.error('Sync registration failed:', error);
-            toast('Background sync test failed', { 
-              className: 'bg-destructive text-destructive-foreground' 
+      navigator.serviceWorker.ready.then((registration: ExtendedServiceWorkerRegistration) => {
+        if (registration.sync) {
+          registration.sync.register('sync-passwords')
+            .then(() => {
+              console.log('Sync registration successful');
+              toast('Background sync test triggered');
+            })
+            .catch(error => {
+              console.error('Sync registration failed:', error);
+              toast('Background sync test failed', { 
+                className: 'bg-destructive text-destructive-foreground' 
+              });
             });
+        } else {
+          console.log('Sync API not available in this browser');
+          toast('Background sync API not available', {
+            className: 'bg-destructive text-destructive-foreground'
           });
+        }
       });
     } else {
       toast('Background sync not supported in this browser', {

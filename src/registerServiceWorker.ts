@@ -1,6 +1,15 @@
 
 // Service Worker registration logic
 
+// Define interfaces for ServiceWorker sync functionality
+interface SyncManager {
+  register(tag: string): Promise<void>;
+}
+
+interface ExtendedServiceWorkerRegistration extends ServiceWorkerRegistration {
+  sync?: SyncManager;
+}
+
 export function register() {
   if ('serviceWorker' in navigator) {
     console.log('Service Worker is supported in this browser');
@@ -53,7 +62,7 @@ export function register() {
           // Test a background sync if supported
           if ('SyncManager' in window) {
             console.log('Sync Manager is supported in this browser');
-            testBackgroundSync(registration);
+            testBackgroundSync(registration as ExtendedServiceWorkerRegistration);
           } else {
             console.log('Sync Manager is not supported in this browser');
           }
@@ -118,12 +127,14 @@ async function subscribeToPushNotifications(registration: ServiceWorkerRegistrat
 }
 
 // Function to test background sync
-async function testBackgroundSync(registration: ServiceWorkerRegistration) {
+async function testBackgroundSync(registration: ExtendedServiceWorkerRegistration) {
   try {
-    if ('sync' in registration) {
+    if (registration.sync) {
       console.log('Testing background sync registration...');
       await registration.sync.register('sync-passwords');
       console.log('Background sync registered successfully');
+    } else {
+      console.log('Sync API not supported by this browser');
     }
   } catch (error) {
     console.error('Error registering background sync:', error);
