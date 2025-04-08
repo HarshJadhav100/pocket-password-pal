@@ -12,11 +12,11 @@ import { ThemeProvider } from "next-themes";
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
 
-// Fix: Proper nesting of providers to ensure React context is correctly set up
+// Fix: Proper order of providers to ensure React context is correctly initialized
 const App = () => (
   <BrowserRouter>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
@@ -30,8 +30,8 @@ const App = () => (
           </Routes>
           <Toaster />
         </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   </BrowserRouter>
 );
 

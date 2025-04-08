@@ -66,15 +66,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) throw error;
       
-      toast({
-        title: "Welcome back!",
-        description: "Successfully signed in to your account.",
+      toast("Welcome back!", {
+        description: "Successfully signed in to your account."
       });
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Sign in failed",
+      toast("Sign in failed", {
         description: error.message || "An error occurred during sign in",
+        className: "bg-destructive text-destructive-foreground"
       });
       throw error;
     } finally {
@@ -97,15 +95,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) throw error;
       
-      toast({
-        title: "Account created",
-        description: "Your account has been created successfully! Please check your email for verification.",
+      toast("Account created", {
+        description: "Your account has been created successfully! Please check your email for verification."
       });
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Sign up failed",
+      toast("Sign up failed", {
         description: error.message || "An error occurred during sign up",
+        className: "bg-destructive text-destructive-foreground"
       });
       throw error;
     } finally {
@@ -119,10 +115,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Sign out failed",
+      toast("Sign out failed", {
         description: error.message || "An error occurred during sign out",
+        className: "bg-destructive text-destructive-foreground"
       });
     } finally {
       setIsLoading(false);

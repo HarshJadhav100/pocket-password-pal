@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,9 @@ const SignUpForm = ({ onSwitch }: SignUpFormProps) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Passwords don't match",
+      toast("Passwords don't match", {
         description: "Please make sure your passwords match.",
+        className: "bg-destructive text-destructive-foreground"
       });
       return;
     }
