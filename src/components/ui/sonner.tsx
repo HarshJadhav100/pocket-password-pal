@@ -1,11 +1,11 @@
 
-import { Toaster as Sonner } from "sonner";
+import { Toaster as SonnerToaster } from "sonner";
 
-type ToasterProps = React.ComponentProps<typeof Sonner>;
+type ToasterProps = React.ComponentProps<typeof SonnerToaster>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
-    <Sonner
+    <SonnerToaster
       className="toaster group"
       toastOptions={{
         classNames: {

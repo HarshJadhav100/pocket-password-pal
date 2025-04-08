@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Lock, Mail, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -18,7 +17,6 @@ const SignUpForm = ({ onSwitch }: SignUpFormProps) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const { signUp, isLoading } = useAuth();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

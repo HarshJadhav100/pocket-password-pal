@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface AuthContextProps {
   user: User | null;
