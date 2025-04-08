@@ -12,6 +12,7 @@ export interface PasswordEntry {
   favorite?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  notes?: string;
 }
 
 // Function to fetch all passwords for the current user
@@ -28,15 +29,8 @@ export const fetchPasswords = async (): Promise<PasswordEntry[]> => {
   return data || [];
 };
 
-// Function to map data to a PasswordEntry object without 'favorite' property
-export const mapToPasswordEntry = (data: any): Omit<PasswordEntry, 'id'> => {
-  // Remove any properties not in the PasswordEntry type
-  const { id, favorite, ...rest } = data;
-  return rest;
-};
-
 // Function to create a new password entry
-export const createPassword = async (passwordData: Omit<PasswordEntry, 'id'>): Promise<PasswordEntry> => {
+export const createPassword = async (passwordData: Omit<PasswordEntry, 'id' | 'user_id'>): Promise<PasswordEntry> => {
   const { data: session } = await supabase.auth.getSession();
   if (!session?.session?.user) throw new Error('No authenticated user found');
   
@@ -51,7 +45,7 @@ export const createPassword = async (passwordData: Omit<PasswordEntry, 'id'>): P
 };
 
 // Function to update an existing password
-export const updatePassword = async (id: string, passwordData: Partial<Omit<PasswordEntry, 'id'>>): Promise<PasswordEntry> => {
+export const updatePassword = async (id: string, passwordData: Partial<Omit<PasswordEntry, 'id' | 'user_id'>>): Promise<PasswordEntry> => {
   const { data, error } = await supabase
     .from('password_entries')
     .update(passwordData)

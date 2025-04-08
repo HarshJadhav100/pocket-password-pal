@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,11 +15,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { LogOut, PlusCircle, Search, Shield } from "lucide-react";
 import PasswordCard from "@/components/passwords/PasswordCard";
 import PasswordForm, { PasswordData } from "@/components/passwords/PasswordForm";
-import { PasswordEntry } from "@/utils/demoData";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
+  PasswordEntry,
   fetchPasswords, 
   addPassword, 
   updatePassword, 
@@ -66,7 +65,7 @@ const PasswordVault = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string, data: PasswordData }) => 
+    mutationFn: ({ id, data }: { id: string, data: Partial<Omit<PasswordEntry, "id">> }) => 
       updatePassword(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['passwords'] });
@@ -154,9 +153,16 @@ const PasswordVault = () => {
 
   const handleSavePassword = (data: PasswordData) => {
     if (isEditing && currentPassword) {
-      updateMutation.mutate({ id: currentPassword.id, data });
+      updateMutation.mutate({ 
+        id: currentPassword.id, 
+        data: {
+          ...data,
+          user_id: currentPassword.user_id // Ensure user_id is preserved
+        } 
+      });
     } else {
-      addMutation.mutate(data);
+      // For new password entries, user_id will be added by the service
+      addMutation.mutate(data as any); // Type cast to avoid TS error
     }
     
     setIsFormOpen(false);
