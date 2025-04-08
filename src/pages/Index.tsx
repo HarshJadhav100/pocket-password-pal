@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import AuthScreen from '@/components/auth/AuthScreen';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 const Index = () => {
   const { user, isLoading } = useAuth();
@@ -45,8 +46,33 @@ const Index = () => {
     // Track the outcome (accepted/dismissed)
     if (choiceResult.outcome === 'accepted') {
       console.log('User accepted the install prompt');
+      toast('App installed successfully!');
     } else {
       console.log('User dismissed the install prompt');
+    }
+  };
+
+  // Function to test service worker functionality
+  const testServiceWorkerFeatures = () => {
+    // Test background sync
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+      navigator.serviceWorker.ready.then(registration => {
+        registration.sync.register('sync-passwords')
+          .then(() => {
+            console.log('Sync registration successful');
+            toast('Background sync test triggered');
+          })
+          .catch(error => {
+            console.error('Sync registration failed:', error);
+            toast('Background sync test failed', { 
+              className: 'bg-destructive text-destructive-foreground' 
+            });
+          });
+      });
+    } else {
+      toast('Background sync not supported in this browser', {
+        className: 'bg-destructive text-destructive-foreground'
+      });
     }
   };
   
@@ -68,10 +94,33 @@ const Index = () => {
     <div className="min-h-screen relative">
       <AuthScreen />
       
-      {showInstallButton && (
+      <div className="fixed bottom-4 right-4 flex flex-col gap-2">
+        {showInstallButton && (
+          <button 
+            onClick={handleAppInstall}
+            className="bg-brand-600 text-white py-2 px-4 rounded-md flex items-center shadow-lg"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-5 w-5 mr-2" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M12 4v16m8-8H4" 
+              />
+            </svg>
+            Add to Home Screen
+          </button>
+        )}
+        
         <button 
-          onClick={handleAppInstall}
-          className="fixed bottom-4 right-4 bg-brand-600 text-white py-2 px-4 rounded-md flex items-center shadow-lg"
+          onClick={testServiceWorkerFeatures}
+          className="bg-blue-600 text-white py-2 px-4 rounded-md flex items-center shadow-lg"
         >
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
@@ -84,12 +133,12 @@ const Index = () => {
               strokeLinecap="round" 
               strokeLinejoin="round" 
               strokeWidth={2} 
-              d="M12 4v16m8-8H4" 
+              d="M13 10V3L4 14h7v7l9-11h-7z" 
             />
           </svg>
-          Add to Home Screen
+          Test PWA Features
         </button>
-      )}
+      </div>
     </div>
   );
 };
