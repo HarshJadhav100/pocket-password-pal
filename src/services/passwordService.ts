@@ -10,6 +10,8 @@ export interface PasswordEntry {
   password: string;
   url?: string;
   favorite?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Function to fetch all passwords for the current user
@@ -18,7 +20,7 @@ export const fetchPasswords = async (): Promise<PasswordEntry[]> => {
   if (!session?.session?.user) throw new Error('No authenticated user found');
   
   const { data, error } = await supabase
-    .from('passwords')
+    .from('password_entries')
     .select('*')
     .eq('user_id', session.session.user.id);
 
@@ -39,7 +41,7 @@ export const createPassword = async (passwordData: Omit<PasswordEntry, 'id'>): P
   if (!session?.session?.user) throw new Error('No authenticated user found');
   
   const { data, error } = await supabase
-    .from('passwords')
+    .from('password_entries')
     .insert({ ...passwordData, user_id: session.session.user.id })
     .select()
     .single();
@@ -51,7 +53,7 @@ export const createPassword = async (passwordData: Omit<PasswordEntry, 'id'>): P
 // Function to update an existing password
 export const updatePassword = async (id: string, passwordData: Partial<Omit<PasswordEntry, 'id'>>): Promise<PasswordEntry> => {
   const { data, error } = await supabase
-    .from('passwords')
+    .from('password_entries')
     .update(passwordData)
     .eq('id', id)
     .select()
@@ -64,7 +66,7 @@ export const updatePassword = async (id: string, passwordData: Partial<Omit<Pass
 // Function to delete a password
 export const deletePassword = async (id: string): Promise<void> => {
   const { error } = await supabase
-    .from('passwords')
+    .from('password_entries')
     .delete()
     .eq('id', id);
 
