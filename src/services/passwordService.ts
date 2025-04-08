@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 // Define PasswordEntry type if not imported from supabase types
@@ -34,9 +33,16 @@ export const createPassword = async (passwordData: Omit<PasswordEntry, 'id' | 'u
   const { data: session } = await supabase.auth.getSession();
   if (!session?.session?.user) throw new Error('No authenticated user found');
   
+  // Ensure url is null if undefined to match database schema expectations
+  const dataToInsert = {
+    ...passwordData,
+    url: passwordData.url || null,
+    user_id: session.session.user.id
+  };
+  
   const { data, error } = await supabase
     .from('password_entries')
-    .insert({ ...passwordData, user_id: session.session.user.id })
+    .insert(dataToInsert)
     .select()
     .single();
 

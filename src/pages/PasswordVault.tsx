@@ -39,13 +39,11 @@ const PasswordVault = () => {
   
   const queryClient = useQueryClient();
 
-  // Fetch passwords using React Query
   const { data: passwords = [], isLoading, isError } = useQuery({
     queryKey: ['passwords'],
     queryFn: fetchPasswords,
   });
 
-  // Mutations for CRUD operations
   const addMutation = useMutation({
     mutationFn: addPassword,
     onSuccess: () => {
@@ -101,7 +99,6 @@ const PasswordVault = () => {
     }
   });
 
-  // Filter passwords when search query changes
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredPasswords(passwords);
@@ -118,7 +115,6 @@ const PasswordVault = () => {
     setFilteredPasswords(filtered);
   }, [searchQuery, passwords]);
 
-  // Set filtered passwords initially
   useEffect(() => {
     setFilteredPasswords(passwords);
   }, [passwords]);
@@ -157,12 +153,15 @@ const PasswordVault = () => {
         id: currentPassword.id, 
         data: {
           ...data,
-          user_id: currentPassword.user_id // Ensure user_id is preserved
+          url: data.url || null,
+          user_id: currentPassword.user_id
         } 
       });
     } else {
-      // For new password entries, user_id will be added by the service
-      addMutation.mutate(data as any); // Type cast to avoid TS error
+      addMutation.mutate({
+        ...data,
+        url: data.url || null
+      } as any);
     }
     
     setIsFormOpen(false);

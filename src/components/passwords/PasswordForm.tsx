@@ -27,7 +27,7 @@ export interface PasswordData {
   title: string;
   username: string;
   password: string;
-  url: string;
+  url?: string; // Changed from required to optional
   notes?: string;
 }
 
